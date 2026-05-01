@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-do Học Tập</title>
+
+<style>
+body{font-family:sans-serif;background:#f5f7ff;padding:20px}
+.app{max-width:700px;margin:auto}
+input,button,select{padding:8px;margin:4px}
+.task{background:#fff;padding:10px;margin:6px 0;border-radius:8px;display:flex;justify-content:space-between}
+.done{text-decoration:line-through;opacity:0.5}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h2>📚 To-do Học Tập</h2>
+
+<input id="taskInput" placeholder="Nhập việc...">
+<input type="date" id="taskDate">
+<input type="time" id="taskTime">
+
+<select id="taskPriority">
+<option value="high">🔴 Cao</option>
+<option value="mid">🟡 Vừa</option>
+<option value="low">🟢 Thấp</option>
+</select>
+
+<button onclick="addTask()">+ Thêm</button>
+
+<h3>📋 Danh sách</h3>
+<div id="taskList"></div>
+
+<h3>📅 Timeline theo ngày</h3>
+<input type="date" id="viewDate">
+<div id="timeline"></div>
+
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem('tasks')||'[]')
+
+function save(){
+localStorage.setItem('tasks',JSON.stringify(tasks))
+}
+
+function addTask(){
+const text = document.getElementById('taskInput').value.trim()
+const date = document.getElementById('taskDate').value
+const time = document.getElementById('taskTime').value
+const priority = document.getElementById('taskPriority').value
+
+if(!text||!date||!time){
+alert("Nhập đầy đủ!")
+return
+}
+
+tasks.push({id:Date.now(),text,date,time,priority,done:false})
+
+tasks.sort((a,b)=> new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time))
+
+save()
+render()
+}
+
+function toggle(id){
+const t = tasks.find(x=>x.id==id)
+t.done=!t.done
+save()
+render()
+}
+
+function del(id){
+tasks = tasks.filter(x=>x.id!=id)
+save()
+render()
+}
+
+function render(){
+const list = document.getElementById('taskList')
+
+list.innerHTML = tasks.map(t=>`
+<div class="task ${t.done?'done':''}">
+<span onclick="toggle(${t.id})">${t.text} (${t.date} ${t.time})</span>
+<button onclick="del(${t.id})">x</button>
+</div>
+`).join('')
+
+renderTimeline()
+}
+
+function renderTimeline(){
+const date = document.getElementById('viewDate').value || new Date().toISOString().slice(0,10)
+
+const box = document.getElementById('timeline')
+
+const dayTasks = tasks.filter(t=>t.date==date)
+
+if(dayTasks.length==0){
+box.innerHTML = "Không có việc"
+return
+}
+
+box.innerHTML = dayTasks.map(t=>`
+<div class="task ${t.done?'done':''}">
+${t.time} - ${t.text}
+</div>
+`).join('')
+}
+
+document.getElementById('viewDate').addEventListener('change',render)
+
+render()
+</script>
+
+</body>
+</html>
